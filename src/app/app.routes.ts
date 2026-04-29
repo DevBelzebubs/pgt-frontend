@@ -24,6 +24,10 @@ export const routes: Routes = [
         path: 'tracking',
         loadChildren: () => import('./tracking/tracking.module').then((m) => m.TrackingModule)
       },
+      {
+        path: 'admin',
+        loadChildren: () => import('./admin/admin.module').then((m) => m.AdminModule)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
