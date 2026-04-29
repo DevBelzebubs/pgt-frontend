@@ -1,9 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, signal, input, output } from '@angular/core';
-
+import { Router, ActivatedRoute, NavigationEnd, RouterModule } from '@angular/router';
+import { filter } from 'rxjs';
+export interface Breadcrumb {
+  label: string;
+  url: string;
+}
 @Component({
   selector: 'app-navbar',
-  imports: [CommonModule],
+  imports: [CommonModule,RouterModule],
   templateUrl: './navbar.html',
   styles: [`
     @keyframes dropdownFade {
@@ -20,6 +25,9 @@ export class Navbar {
   hasUnreadNotifications = signal<boolean>(true);
   isSettingsOpen = signal<boolean>(false);
   isDarkMode = signal<boolean>(false);
+  breadcrumbs = signal<Breadcrumb[]>([]);
+  private router = inject(Router);
+  private activatedRoute = inject(ActivatedRoute);
 
   // Recibe el estado abierto/cerrado del sidebar desde el layout
   sidebarOpen = input<boolean>(false);
@@ -28,11 +36,14 @@ export class Navbar {
   toggleSidebar = output<void>();
 
   ngOnInit() {
-    const theme = localStorage.getItem('theme');
-    if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      this.isDarkMode.set(true);
-      document.documentElement.classList.add('dark');
-    }
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      const root = this.router.routerState.root;
+      const breadcrumbs: Breadcrumb[] = [];
+      this.buildBreadcrumbs(root, '', breadcrumbs);
+      this.breadcrumbs.set(breadcrumbs);
+    });
   }
 
   toggleSettings() {
@@ -48,6 +59,23 @@ export class Navbar {
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
+    }
+  }
+  private buildBreadcrumbs(route: ActivatedRoute, url: string = '', breadcrumbs: Breadcrumb[] = []): void {
+    if (route) {
+      const routeUrl = route.snapshot.url.map(segment => segment.path).join('/');
+      if (routeUrl !== '') {
+        url += `/${routeUrl}`;
+      }
+      if (route.snapshot.data['breadcrumb']) {
+        const label = route.snapshot.data['breadcrumb'];
+        if (breadcrumbs.length === 0 || breadcrumbs[breadcrumbs.length - 1].label !== label) {
+          breadcrumbs.push({ label, url });
+        }
+      }
+      if (route.firstChild) {
+        this.buildBreadcrumbs(route.firstChild, url, breadcrumbs);
+      }
     }
   }
 }

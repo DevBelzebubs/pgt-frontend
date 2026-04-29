@@ -5,7 +5,8 @@ import { MainDashboard } from './pages/main-dashboard/main-dashboard';
 const routes: Routes = [
   {
     path: '',
-    component: MainDashboard
+    component: MainDashboard,
+    data: { breadcrumb: 'Dashboard Principal' }
   }
 ];
 

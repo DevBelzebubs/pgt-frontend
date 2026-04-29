@@ -1,22 +1,19 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { MovementForm } from './pages/movement-form/movement-form';
-import { ProductForm } from './pages/product-form/product-form';
 import { ProductList } from './pages/product-list/product-list';
+import { MovementList } from './pages/movement-list/movement-list';
 
 const routes: Routes = [
   {
     path: '',
-    component: ProductList
+    component: ProductList,
+    data: { breadcrumb: 'Inventario General' }
   },
   {
-    path: 'nuevo',
-    component: ProductForm
+    path: 'movimientos',
+    component: MovementList,
+    data: { breadcrumb: 'Trazabilidad' }
   },
-  {
-    path: 'movimientos/nuevo',
-    component: MovementForm
-  }
 ];
 
 @NgModule({

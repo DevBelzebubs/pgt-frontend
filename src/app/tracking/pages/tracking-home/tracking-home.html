@@ -1,23 +1,25 @@
 <div
   class="flex flex-col lg:flex-row items-stretch p-8 lg:p-10 gap-6 w-full min-h-full transition-colors duration-300"
 >
+  <!-- ÁREA DEL MAPA DE CALOR -->
   <div
     class="flex flex-col flex-1 bg-gray-50 dark:bg-[#1B1B1B] border border-gray-100 dark:border-[#313131] rounded-2xl p-8 shadow-sm relative overflow-hidden transition-colors"
   >
     <div class="flex justify-between items-start w-full mb-8 relative z-30">
       <h2 class="font-['Work_Sans'] font-bold text-3xl text-[#111D23] dark:text-white">
-        Zona <span class="text-[#81000A] dark:text-[#E2BEBA]">Mapa de calor</span>
+        Mapa de Calor por <span class="text-[#81000A] dark:text-[#E2BEBA]">Zonas</span>
       </h2>
       <div
         class="flex items-center gap-2 px-4 py-1.5 bg-[#81000A] rounded-full shadow-[0_0_15px_rgba(129,0,10,0.5)]"
       >
         <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
-        <span class="font-['Inter'] font-bold text-[10px] tracking-wider uppercase text-white"
-          >Live Thermal Feed</span
-        >
+        <span class="font-['Inter'] font-bold text-[10px] tracking-wider uppercase text-white">
+          Transmisión Térmica Activa
+        </span>
       </div>
     </div>
 
+    <!-- PLANO DEL ALMACÉN -->
     <div
       class="relative w-full flex-1 flex flex-col items-center py-12 rounded-xl border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#111111] overflow-hidden transition-colors"
       style="
@@ -28,9 +30,9 @@
       <div
         class="absolute top-6 left-6 px-4 py-2 bg-[#1B1B1B] border border-[#313131] rounded-full shadow-lg z-30"
       >
-        <span class="font-['Inter'] font-bold text-xs tracking-widest text-[#E2BEBA] uppercase"
-          >Sector 4 - Receiving</span
-        >
+        <span class="font-['Inter'] font-bold text-xs tracking-widest text-[#E2BEBA] uppercase">
+          Sector 4 - Recepción
+        </span>
       </div>
 
       <div class="relative z-10 flex gap-12 md:gap-24 mt-8">
@@ -72,10 +74,17 @@
                   >
                     {{ rack.id }}
 
+                    <!-- Tooltip Mejorado para mostrar Categorías en el mapa -->
                     <div
-                      class="absolute -right-16 bg-[#111111] border border-[#313131] text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg"
+                      class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#111111] border border-[#313131] px-3 py-2 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg flex flex-col items-center min-w-max"
                     >
-                      {{ rack.intensity }}% Heat
+                      <span class="font-bold text-white text-[11px]"
+                        >{{ rack.intensity }}% Nivel de Rotación</span
+                      >
+                      <!-- Usamos un fallback a 'Repuestos' por si no tienes la propiedad 'category' definida aún -->
+                      <span class="text-[#8A9BA8] text-[9px] uppercase tracking-wider mt-0.5">{{
+                        rack.category || 'Componentes Mixtos'
+                      }}</span>
                     </div>
                   </div>
                 </div>
@@ -92,8 +101,9 @@
     >
       <span
         class="font-['Inter'] font-bold text-[10px] tracking-wider uppercase text-[#4C616C] dark:text-[#8A9BA8]"
-        >Thermal Scale</span
       >
+        Escala Térmica
+      </span>
       <div class="flex h-3 w-48 rounded-full overflow-hidden">
         <div class="flex-1 bg-gray-200 dark:bg-[#222222]"></div>
         <div class="flex-1 bg-[#D69E2E]"></div>
@@ -103,12 +113,15 @@
       </div>
     </div>
   </div>
+
+  <!-- PANEL LATERAL DE DETALLES -->
   <div
     class="w-full lg:w-[400px] flex flex-col bg-white dark:bg-[#1B1B1B] border border-gray-100 dark:border-[#313131] rounded-2xl shadow-sm transition-colors overflow-hidden shrink-0 relative"
   >
     <div
       class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#81000A] to-transparent opacity-50"
     ></div>
+
     <div class="flex justify-between items-start p-8 border-b border-gray-50 dark:border-[#313131]">
       <div class="flex flex-col">
         <div class="flex items-center gap-2 mb-1">
@@ -116,7 +129,7 @@
           <span
             class="font-['Inter'] font-bold text-[10px] tracking-[1.5px] uppercase text-[#81000A] dark:text-[#E2BEBA]"
           >
-            Diagnostics
+            Diagnóstico de Nodo
           </span>
         </div>
         <h3 class="font-['Work_Sans'] font-bold text-3xl text-[#111D23] dark:text-white">
@@ -144,11 +157,12 @@
         >
           <span
             class="font-['Inter'] font-semibold text-[11px] text-[#4C616C] dark:text-[#8A9BA8] uppercase tracking-wider mb-2"
-            >Occupancy Rate</span
           >
-          <span class="font-['Work_Sans'] font-bold text-3xl text-[#111D23] dark:text-white"
-            >{{ selectedNode().occupancy }}%</span
-          >
+            Tasa de Ocupación
+          </span>
+          <span class="font-['Work_Sans'] font-bold text-3xl text-[#111D23] dark:text-white">
+            {{ selectedNode().occupancy }}%
+          </span>
           <span
             class="text-[#81000A] text-[10px] font-bold mt-2 uppercase tracking-wide flex items-center gap-1"
           >
@@ -169,11 +183,12 @@
         >
           <span
             class="font-['Inter'] font-semibold text-[11px] text-[#4C616C] dark:text-[#8A9BA8] uppercase tracking-wider mb-2"
-            >Velocity (24h)</span
           >
-          <span class="font-['Work_Sans'] font-bold text-3xl text-[#111D23] dark:text-white">{{
-            selectedNode().dailyPicks
-          }}</span>
+            Picks Diarios (24h)
+          </span>
+          <span class="font-['Work_Sans'] font-bold text-3xl text-[#111D23] dark:text-white">
+            {{ selectedNode().dailyPicks }}
+          </span>
           <span
             class="text-[#DD6B20] text-[10px] font-bold mt-2 uppercase tracking-wide flex items-center gap-1"
           >
@@ -194,7 +209,7 @@
         <h4
           class="font-['Inter'] font-bold text-xs uppercase tracking-widest text-[#4C616C] dark:text-[#8A9BA8]"
         >
-          Stored Assets
+          Activos Almacenados
         </h4>
 
         <div class="flex flex-col gap-3">
@@ -223,12 +238,12 @@
                 <span class="font-['Inter'] font-bold text-sm text-[#111D23] dark:text-white">{{
                   item.name
                 }}</span>
-                <span class="font-['Inter'] font-medium text-xs text-[#4C616C] dark:text-[#8A9BA8]"
-                  >Stock:
+                <span class="font-['Inter'] font-medium text-xs text-[#4C616C] dark:text-[#8A9BA8]">
+                  Stock:
                   <span class="text-[#111D23] dark:text-white font-bold"
-                    >{{ item.qty }} units</span
-                  ></span
-                >
+                    >{{ item.qty }} unidades</span
+                  >
+                </span>
               </div>
             </div>
           }
@@ -251,7 +266,7 @@
             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
           />
         </svg>
-        Execute Audit Cycle
+        Ejecutar Ciclo de Auditoría
       </button>
     </div>
   </div>
