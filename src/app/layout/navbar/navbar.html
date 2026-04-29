@@ -2,48 +2,56 @@
   class="w-full h-[80px] bg-[#F4FAFF] dark:bg-[#111111] flex items-center justify-between px-8 shadow-[0px_4px_24px_rgba(17,29,35,0.04)] dark:shadow-none border-b border-[rgba(129,0,10,0.1)] dark:border-[#313131] transition-colors duration-300 z-10 shrink-0"
 >
 
-  <!-- LADO IZQUIERDO: Hamburguesa + Buscador -->
-  <div class="flex items-center gap-4">
+  <div class="flex items-center gap-6">
+    
+    <nav class="flex" aria-label="Breadcrumb">
+      <ol class="inline-flex items-center space-x-2">
+        
+        <!-- Ítem Fijo: Home / Dashboard -->
+        <li class="inline-flex items-center">
+          <a routerLink="/dashboard" class="inline-flex items-center font-['Inter'] text-sm font-medium text-[#4C616C] dark:text-[#8A9BA8] hover:text-[#81000A] dark:hover:text-white transition-colors cursor-pointer">
+            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            Inicio
+          </a>
+        </li>
 
-    <!-- Botón hamburguesa — solo visible en móvil/tablet -->
-    <button
-      class="lg:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5 rounded-lg hover:bg-[rgba(129,0,10,0.05)] dark:hover:bg-[#222222] transition-colors cursor-pointer border-none outline-none"
-      (click)="toggleSidebar.emit()"
-      aria-label="Abrir menú"
-    >
-      <span
-        class="w-5 h-0.5 bg-[#4C616C] dark:bg-[#8A9BA8] transition-all duration-300 origin-center block"
-        [class.rotate-45]="sidebarOpen()"
-        [class.translate-y-2]="sidebarOpen()"
-      ></span>
-      <span
-        class="w-5 h-0.5 bg-[#4C616C] dark:bg-[#8A9BA8] transition-all duration-300 block"
-        [class.opacity-0]="sidebarOpen()"
-        [class.scale-x-0]="sidebarOpen()"
-      ></span>
-      <span
-        class="w-5 h-0.5 bg-[#4C616C] dark:bg-[#8A9BA8] transition-all duration-300 origin-center block"
-        [class.-rotate-45]="sidebarOpen()"
-        [class.-translate-y-2]="sidebarOpen()"
-      ></span>
-    </button>
+        <!-- Generación dinámica de la ruta actual -->
+        @for (crumb of breadcrumbs(); track crumb.url; let last = $last) {
+          <li [attr.aria-current]="last ? 'page' : null">
+            <div class="flex items-center">
+              <svg class="w-4 h-4 text-gray-300 dark:text-[#313131]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              
+              <!-- Si NO es el último elemento, es un link clickeable -->
+              @if (!last) {
+                <a [routerLink]="crumb.url" class="ml-2 font-['Inter'] text-sm font-medium text-[#4C616C] dark:text-[#8A9BA8] hover:text-[#81000A] dark:hover:text-white transition-colors cursor-pointer">
+                  {{ crumb.label }}
+                </a>
+              } 
+              <!-- Si ES el último elemento, es texto en negrita (posición actual) -->
+              @else {
+                <span class="ml-2 font-['Inter'] text-sm font-bold text-[#111D23] dark:text-white">
+                  {{ crumb.label }}
+                </span>
+              }
+            </div>
+          </li>
+        }
+      </ol>
+    </nav>
 
-    <!-- Buscador -->
-    <div class="relative flex items-center">
-      <div class="absolute left-4 flex items-center pointer-events-none">
-        <svg
-          class="w-[18px] h-[18px] text-[#4C616C] dark:text-[#8A9BA8] transition-colors"
-          fill="none" viewBox="0 0 24 24" stroke="currentColor"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </div>
-      <input
-        type="text"
-        placeholder="Buscar..."
-        class="w-[280px] h-10 bg-white dark:bg-[rgba(129,0,10,0.1)] border border-[rgba(129,0,10,0.1)] dark:border-[#313131] rounded-full pl-[42px] pr-4 font-['Inter'] text-sm text-[#111D23] dark:text-white placeholder-[#4C616C] dark:placeholder-[#8A9BA8] focus:outline-none focus:ring-1 focus:ring-[#81000A] dark:focus:ring-[#E2BEBA] transition-colors"
-      />
+    <!-- Separador -->
+    <div class="hidden md:block h-5 w-px bg-gray-200 dark:bg-[#313131] transition-colors"></div>
+
+    <!-- System Node Status -->
+    <div class="hidden md:flex items-center gap-2 bg-gray-50 dark:bg-[#1B1B1B] border border-gray-100 dark:border-[#313131] px-3 py-1.5 rounded-full transition-colors">
+      <div class="w-2 h-2 rounded-full bg-[#34A853] animate-pulse shadow-[0_0_8px_rgba(52,168,83,0.6)]"></div>
+      <span class="font-['Inter'] font-bold text-[10px] tracking-widest uppercase text-[#4C616C] dark:text-[#8A9BA8]">
+        Nodo: Central-01
+      </span>
     </div>
 
   </div>
