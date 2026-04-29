@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal, input, output } from '@angular/core';
+import { Component, signal, input, output, inject } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd, RouterModule } from '@angular/router';
 import { filter } from 'rxjs';
 export interface Breadcrumb {
