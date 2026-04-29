@@ -1,18 +1,32 @@
-<aside class="relative w-[288px] h-screen bg-white dark:bg-[#1B1B1B] flex flex-col justify-between shrink-0 border-r border-gray-100 dark:border-[#313131] pt-20 pb-8 transition-colors duration-300 z-20">
-  
+<aside
+  class="fixed lg:relative top-0 left-0 h-screen bg-white dark:bg-[#1B1B1B] flex flex-col justify-between shrink-0 border-r border-gray-100 dark:border-[#313131] pt-6 lg:pt-20 pb-8 transition-all duration-300 z-40 lg:w-[288px] -translate-x-full lg:translate-x-0"
+  [class.w-\[288px\]]="isOpen()"
+  [class.w-\[72px\]]="!isOpen()"
+  [class.translate-x-0]="isOpen()"
+  [class.-translate-x-full]="!isOpen()"
+>
+
   <div class="flex flex-col w-full">
-    
-    <div class="flex items-center gap-3 px-8 mb-8">
+
+    <!-- Logo / Marca -->
+    <div class="flex items-center gap-3 mb-8"
+      [class.px-8]="isOpen()"
+      [class.px-0]="!isOpen()"
+      [class.justify-center]="!isOpen()"
+      [class.lg:px-8]="true"
+    >
       <div class="flex justify-center items-center w-10 h-10 bg-[#81000A] shrink-0 rounded-sm">
         <div class="w-5 h-5 bg-white"></div>
       </div>
-      <span class="font-['Work_Sans'] font-black text-sm leading-tight uppercase text-[#111D23] dark:text-white transition-colors">
+      <span
+        class="font-['Work_Sans'] font-black text-sm leading-tight uppercase text-[#111D23] dark:text-white transition-colors lg:block"
+        [class.hidden]="!isOpen()"
+      >
         portable global technology
       </span>
     </div>
 
     <nav class="flex flex-col w-full">
-      <!-- Iteración Dinámica del Menú -->
       @for (item of menuItems; track item.route) {
         <a [routerLink]="item.route" 
            routerLinkActive="active-link" 
@@ -49,7 +63,9 @@
           <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
         </svg>
       </div>
-      <div class="flex flex-col overflow-hidden">
+      <div class="flex flex-col overflow-hidden lg:flex"
+        [class.hidden]="!isOpen()"
+      >
         <span class="font-['Inter'] font-bold text-sm text-[#111D23] dark:text-white truncate transition-colors">{{ userName }}</span>
         <span class="font-['Inter'] font-medium text-[11px] uppercase tracking-wider text-[#4C616C] dark:text-[#8A9BA8] truncate transition-colors">{{ userRole }}</span>
       </div>
@@ -59,8 +75,9 @@
       <svg class="w-5 h-5 text-[#4C616C] dark:text-[#8A9BA8] group-hover:text-[#81000A] dark:group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
       </svg>
-      <span class="font-['Inter'] font-semibold text-sm">Cerrar sesión</span>
+      <span class="font-['Inter'] font-semibold text-sm lg:block"
+        [class.hidden]="!isOpen()"
+      >Cerrar sesión</span>
     </button>
   </div>
-
 </aside>

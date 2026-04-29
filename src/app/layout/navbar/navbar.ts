@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, signal, input, output } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd, RouterModule } from '@angular/router';
 import { filter } from 'rxjs';
 export interface Breadcrumb {
@@ -29,6 +29,12 @@ export class Navbar {
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
 
+  // Recibe el estado abierto/cerrado del sidebar desde el layout
+  sidebarOpen = input<boolean>(false);
+
+  // Emite la orden de toggle al layout
+  toggleSidebar = output<void>();
+
   ngOnInit() {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -47,7 +53,6 @@ export class Navbar {
   toggleDarkMode() {
     const isDark = !this.isDarkMode();
     this.isDarkMode.set(isDark);
-    
     if (isDark) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
