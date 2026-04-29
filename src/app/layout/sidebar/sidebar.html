@@ -16,6 +16,7 @@
       @for (item of menuItems; track item.route) {
         <a [routerLink]="item.route" 
            routerLinkActive="active-link" 
+           [routerLinkActiveOptions]="{ exact: true }"
            class="group relative flex items-center gap-4 px-8 py-4 cursor-pointer transition-colors duration-200">
           
           <div class="absolute left-0 top-0 w-1 h-full bg-transparent group-[.active-link]:bg-[#81000A] transition-colors"></div>
@@ -26,7 +27,7 @@
                viewBox="0 0 24 24" 
                stroke="currentColor">
             
-            <!-- Iteramos sobre los trazos para que soporte iconos complejos -->
+            <!-- Iteramos sobre los trazos -->
             @for (path of item.paths; track path) {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="path" />
             }

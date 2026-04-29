@@ -9,7 +9,10 @@ const routes: Routes = [
       {
         path: 'config',
         component: AdminHome,
-        title: 'Administración del Sistema | PGT'
+        title: 'Administración del Sistema | PGT',
+        data: {
+          breadcrumb: 'Administración del Sistema'
+        }
       },
       {
         path: '',

@@ -5,7 +5,13 @@ import { TrackingHome } from './pages/tracking-home/tracking-home';
 const routes: Routes = [
   {
     path: '',
-    component: TrackingHome
+    component: TrackingHome,
+    data: { breadcrumb: 'Mapa de calor' }
+  },
+  {
+    path: 'picking-route',
+    loadComponent: () => import('./pages/picking-route/picking-route').then(m => m.PickingRoute),
+    data: { breadcrumb: 'Rutas de Picking' }
   }
 ];
 

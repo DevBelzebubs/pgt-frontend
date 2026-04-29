@@ -6,8 +6,9 @@ import { MainDashboard } from './pages/main-dashboard/main-dashboard';
 
 const routes: Routes = [
   {
-    path: '', // La ruta base del módulo, es decir: /dashboard
-    component: MainDashboard
+    path: '',
+    component: MainDashboard,
+    data: { breadcrumb: 'Dashboard Principal' }
   }
 ];
 
