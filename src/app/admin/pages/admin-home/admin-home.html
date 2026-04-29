@@ -1,0 +1,139 @@
+<div class="flex flex-col items-start p-8 lg:p-10 gap-8 w-full min-h-full transition-colors duration-300">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-4">
+    <div class="flex flex-col">
+      <h2 class="font-['Work_Sans'] font-bold text-3xl text-[#111D23] dark:text-white transition-colors">
+        System Administration
+      </h2>
+      <p class="font-['Inter'] text-sm text-[#4C616C] dark:text-[#8A9BA8] mt-1 transition-colors">
+        Traceability and access control matrix.
+      </p>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <button class="flex items-center gap-2 px-5 py-2.5 bg-[#81000A] hover:bg-[#6a0008] text-white font-['Inter'] font-semibold text-sm rounded-lg shadow-sm transition-colors cursor-pointer">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Export Logs
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 w-full items-start">
+
+    <div class="flex flex-col bg-white dark:bg-[#1B1B1B] border border-gray-100 dark:border-[#313131] rounded-2xl p-6 shadow-sm transition-colors">
+      
+      <div class="flex items-center gap-2 mb-6">
+        <svg class="w-5 h-5 text-[#81000A] dark:text-[#E2BEBA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+        <span class="font-['Inter'] font-bold text-xs tracking-[1px] uppercase text-[#81000A] dark:text-[#E2BEBA]">
+          Role Matrix
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        @for (role of roles(); track role.id) {
+          <div 
+            (click)="selectRole(role.id)"
+            class="relative flex flex-col p-5 rounded-xl border cursor-pointer transition-all duration-200 overflow-hidden group"
+            [ngClass]="role.active ? 'bg-gray-50 dark:bg-[#222222] border-gray-200 dark:border-[#313131]' : 'bg-white dark:bg-[#111111] border-gray-100 dark:border-[#222222] hover:border-gray-300 dark:hover:border-[#313131]'">
+            
+            <div class="absolute left-0 top-0 w-1.5 h-full transition-colors" [ngClass]="role.active ? 'bg-[#81000A]' : 'bg-transparent group-hover:bg-gray-200 dark:group-hover:bg-[#313131]'"></div>
+
+            <div class="flex justify-between items-start w-full mb-2 pl-2">
+              <span class="font-['Inter'] font-bold text-sm text-[#111D23] dark:text-white">{{ role.name }}</span>
+              <span class="font-['Inter'] font-bold text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#313131] text-[#4C616C] dark:text-[#8A9BA8]">
+                {{ role.level }}
+              </span>
+            </div>
+            
+            <p class="font-['Inter'] text-xs text-[#4C616C] dark:text-[#8A9BA8] pl-2 leading-relaxed">
+              {{ role.description }}
+            </p>
+          </div>
+        }
+      </div>
+
+    </div>
+
+    <div class="flex flex-col bg-white dark:bg-[#1B1B1B] border border-gray-100 dark:border-[#313131] rounded-2xl p-6 shadow-sm transition-colors overflow-hidden">
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-4 mb-6">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#81000A] dark:text-[#E2BEBA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="font-['Inter'] font-bold text-lg text-[#111D23] dark:text-white">
+            Global Audit Log
+          </span>
+        </div>
+
+        <div class="flex items-center gap-3 w-full md:w-auto">
+          <div class="relative w-full md:w-64">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="w-4 h-4 text-[#4C616C] dark:text-[#8A9BA8]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input type="text" placeholder="Trace ID or User" class="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-[#111111] border border-gray-200 dark:border-[#313131] rounded-full font-['Inter'] text-sm text-[#111D23] dark:text-white placeholder-[#4C616C] dark:placeholder-[#8A9BA8] focus:outline-none focus:ring-1 focus:ring-[#81000A] transition-colors">
+          </div>
+          
+          <button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#222222] border border-gray-200 dark:border-[#313131] text-[#111D23] dark:text-white font-['Inter'] font-semibold text-sm rounded-full hover:bg-gray-50 dark:hover:bg-[#313131] transition-colors cursor-pointer">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Filter
+          </button>
+        </div>
+      </div>
+
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-left border-collapse whitespace-nowrap">
+          <thead>
+            <tr class="border-b border-gray-100 dark:border-[#313131]">
+              <th class="py-4 pr-6 font-['Inter'] font-bold text-[10px] tracking-[1px] uppercase text-[#81000A] dark:text-[#E2BEBA] opacity-90">Timestamp</th>
+              <th class="py-4 px-6 font-['Inter'] font-bold text-[10px] tracking-[1px] uppercase text-[#81000A] dark:text-[#E2BEBA] opacity-90">User</th>
+              <th class="py-4 px-6 font-['Inter'] font-bold text-[10px] tracking-[1px] uppercase text-[#81000A] dark:text-[#E2BEBA] opacity-90">Event</th>
+              <th class="py-4 pl-6 font-['Inter'] font-bold text-[10px] tracking-[1px] uppercase text-[#81000A] dark:text-[#E2BEBA] opacity-90">Payload / Object</th>
+            </tr>
+          </thead>
+          <tbody class="font-['Inter'] text-sm">
+            @for (log of auditLogs(); track log.id) {
+              <tr class="border-b border-gray-50 dark:border-[#222222] hover:bg-gray-50 dark:hover:bg-[#222222]/50 transition-colors">
+                
+                <td class="py-4 pr-6 text-[#4C616C] dark:text-[#8A9BA8] text-xs">{{ log.timestamp }}</td>
+                
+                <td class="py-4 px-6">
+                  <div class="flex items-center gap-3">
+                    <div class="flex justify-center items-center w-7 h-7 rounded-full text-[10px] font-bold tracking-wider" [ngClass]="getAvatarClass(log.eventType)">
+                      {{ log.userInitials }}
+                    </div>
+                    <span class="font-semibold text-[#111D23] dark:text-white">{{ log.userName }}</span>
+                  </div>
+                </td>
+                
+                <td class="py-4 px-6">
+                  <span class="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide uppercase transition-colors" [ngClass]="getEventBadgeClass(log.eventType)">
+                    {{ log.event }}
+                  </span>
+                </td>
+                
+                <td class="py-4 pl-6 text-[#4C616C] dark:text-[#8A9BA8] text-xs">
+                  {{ log.payload }}
+                </td>
+
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <button class="mt-6 font-['Inter'] font-bold text-xs text-[#81000A] dark:text-[#E2BEBA] hover:underline transition-colors w-full text-center py-2 cursor-pointer">
+        Load Older Entries...
+      </button>
+
+    </div>
+
+  </div>
+</div>
