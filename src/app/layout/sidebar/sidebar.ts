@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal, output } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -10,13 +10,16 @@ interface MenuItem {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule,RouterModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css'
 })
 export class Sidebar {
   userName = 'Juan Perez';
   userRole = 'Adm. Central';
+  isOpen = signal(false);
+  openChange = output<boolean>();
+
   menuItems: MenuItem[] = [
     {
       label: 'Dashboard',
@@ -43,6 +46,16 @@ export class Sidebar {
     }
   ];
   constructor(private authService: AuthService) {}
+
+  toggle() {
+    this.isOpen.update(v => !v);
+    this.openChange.emit(this.isOpen());
+  }
+
+  close() {
+    this.isOpen.set(false);
+    this.openChange.emit(false);
+  }
 
   onLogout(): void {
     this.authService.logout();

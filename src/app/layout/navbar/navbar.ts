@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, signal, input, output } from '@angular/core';
 
 @Component({
   selector: 'app-navbar',
@@ -18,10 +18,14 @@ import { Component, signal } from '@angular/core';
 export class Navbar {
   userName = signal<string>('Diego M.');
   hasUnreadNotifications = signal<boolean>(true);
-  
-  // Controles de UI
   isSettingsOpen = signal<boolean>(false);
   isDarkMode = signal<boolean>(false);
+
+  // Recibe el estado abierto/cerrado del sidebar desde el layout
+  sidebarOpen = input<boolean>(false);
+
+  // Emite la orden de toggle al layout
+  toggleSidebar = output<void>();
 
   ngOnInit() {
     const theme = localStorage.getItem('theme');
@@ -38,7 +42,6 @@ export class Navbar {
   toggleDarkMode() {
     const isDark = !this.isDarkMode();
     this.isDarkMode.set(isDark);
-    
     if (isDark) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
