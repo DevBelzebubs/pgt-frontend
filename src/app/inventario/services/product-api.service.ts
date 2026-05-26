@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ActualizarProductoDto,
@@ -10,23 +10,47 @@ import {
   DetalleProductoDto,
   FiltroCatalogoProductosDto,
   MarcaProductoDto,
-  RespuestaPaginadaProductosDto
+  RespuestaPaginadaProductosDto,
 } from '../models/product.model';
 
+interface ProductoResponseBe {
+  id: string;
+  categoryId: number;
+  brandId: number;
+  codProd: string;
+  codAnexo: string | null;
+  descripcion: string;
+  modelosCompatibles: string[];
+  preCom: number;
+  preVen: number;
+  estado: boolean;
+  fecCreacion: string;
+}
+interface CategoriaResponseBe {
+  id: number;
+  name: string;
+  description: string | null;
+}
+interface MarcaResponseBe {
+  id: number;
+  name: string;
+}
+
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ProductApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiUrl}/inventory/productos`;
-  private readonly categoriasUrl = `${environment.apiUrl}/inventory/categorias`;
-  private readonly marcasUrl = `${environment.apiUrl}/inventory/marcas`;
+
+  private readonly baseUrl = `${environment.apiUrl}/v1/products`;
+  private readonly categoriasUrl = `${environment.apiUrl}/v1/categories`;
+  private readonly marcasUrl = `${environment.apiUrl}/v1/brands`;
 
   listarCatalogo(
-    filtros: FiltroCatalogoProductosDto = {}
+    filtros: FiltroCatalogoProductosDto = {},
   ): Observable<RespuestaPaginadaProductosDto> {
     return this.http.get<RespuestaPaginadaProductosDto>(this.baseUrl, {
-      params: this.construirParams(filtros)
+      params: this.construirParams(filtros),
     });
   }
 
@@ -35,7 +59,19 @@ export class ProductApiService {
   }
 
   crear(payload: CrearProductoDto): Observable<DetalleProductoDto> {
-    return this.http.post<DetalleProductoDto>(this.baseUrl, payload);
+    const payloadBe = {
+      categoryId: payload.idCategoria,
+      brandId: payload.idMarca,
+      codProd: payload.sku,
+      codAnexo: payload.numeroParte || null,
+      descripcion: payload.descripcion,
+      modelosCompatibles: payload.modelosCompatibles,
+      preCom: payload.precioCompra,
+      preVen: payload.precioVenta,
+    };
+    return this.http
+      .post<ProductoResponseBe>(this.baseUrl, payloadBe)
+      .pipe(map((be) => this.mapProductoBeToFe(be)));
   }
 
   actualizar(idProducto: string, payload: ActualizarProductoDto): Observable<DetalleProductoDto> {
@@ -44,17 +80,34 @@ export class ProductApiService {
 
   cambiarEstado(
     idProducto: string,
-    payload: CambiarEstadoProductoDto
+    payload: CambiarEstadoProductoDto,
   ): Observable<DetalleProductoDto> {
     return this.http.patch<DetalleProductoDto>(`${this.baseUrl}/${idProducto}/estado`, payload);
   }
 
   listarCategoriasActivas(): Observable<CategoriaProductoDto[]> {
-    return this.http.get<CategoriaProductoDto[]>(`${this.categoriasUrl}/activas`);
+    return this.http.get<CategoriaResponseBe[]>(this.categoriasUrl).pipe(
+      map((lista) =>
+        lista.map((be) => ({
+          idCategoria: be.id,
+          codigoCategoria: '',
+          nombreCategoria: be.name,
+          activo: true,
+        })),
+      ),
+    );
   }
 
   listarMarcasActivas(): Observable<MarcaProductoDto[]> {
-    return this.http.get<MarcaProductoDto[]>(`${this.marcasUrl}/activas`);
+    return this.http.get<MarcaResponseBe[]>(this.marcasUrl).pipe(
+      map((lista) =>
+        lista.map((be) => ({
+          idMarca: be.id,
+          nombreMarca: be.name,
+          activo: true,
+        })),
+      ),
+    );
   }
 
   private construirParams(filtros: FiltroCatalogoProductosDto): HttpParams {
@@ -89,7 +142,33 @@ export class ProductApiService {
   exportar(formato: 'excel' | 'pdf'): Observable<Blob> {
     const exportUrl = `${environment.apiUrl}/v1/products/export?format=${formato}`;
     return this.http.get(exportUrl, {
-      responseType: 'blob'
-  });
-}
+      responseType: 'blob',
+    });
+  }
+  private mapProductoBeToFe(be: ProductoResponseBe): DetalleProductoDto {
+    return {
+      idProducto: be.id,
+      sku: be.codProd,
+      numeroParte: be.codAnexo,
+      descripcion: be.descripcion,
+      categoria: {
+        idCategoria: be.categoryId,
+        codigoCategoria: '',
+        nombreCategoria: '',
+        activo: true
+      },
+      marca: {
+        idMarca: be.brandId,
+        nombreMarca: '',
+        activo: true
+      },
+      modelosCompatibles: be.modelosCompatibles || [],
+      precioCompra: be.preCom,
+      precioVenta: be.preVen,
+      estado: be.estado,
+      stockMinimo: 0,
+      fechaCreacion: be.fecCreacion
+    };
+  }
+  
 }

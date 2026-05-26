@@ -2,6 +2,11 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductApiService } from '../../services/product-api.service';
+import {
+  CategoriaProductoDto,
+  CrearProductoDto,
+  MarcaProductoDto,
+} from '../../models/product.model';
 @Component({
   selector: 'app-product-list',
   imports: [CommonModule, FormsModule],
@@ -45,7 +50,6 @@ export class ProductList {
     criticalStock: { value: 5, trend: 'Requiere atención', isPositive: false },
     totalCategories: { value: 18, trend: '2 nuevas', isPositive: true },
   });
-
   products = signal([
     {
       id: '1',
@@ -102,7 +106,19 @@ export class ProductList {
       status: 'ACTIVO',
     },
   ]);
-
+  formProducto = signal({
+    idCategoria: null as number | null,
+    idMarca: null as number | null,
+    sku: '',
+    numeroParte: '',
+    descripcion: '',
+    modelosCompatiblesStr: '',
+    precioCompra: null as number | null,
+    precioVenta: null as number | null,
+  });
+  isSaving = signal(false);
+  categorias = signal<CategoriaProductoDto[]>([]);
+  marcas = signal<MarcaProductoDto[]>([]);
   getStockStatus(stock: number): { label: string; colorClass: string } {
     if (stock > 20)
       return {
@@ -125,20 +141,95 @@ export class ProductList {
         'text-[#4C616C] bg-[#F3F4F6] dark:bg-[rgba(255,255,255,0.05)] dark:text-[#8A9BA8]',
     };
   }
-  categorias = signal([
-    { id: 1, nombre: 'Automatización' },
-    { id: 2, nombre: 'Sensores y Transductores' },
-    { id: 3, nombre: 'Motores y Servos' },
-    { id: 4, nombre: 'Válvulas' },
-  ]);
+  ngOnInit(): void {
+    this.cargarCatalogos();
+  }
+  private cargarCatalogos(): void {
+    this.productApi.listarCategoriasActivas().subscribe({
+      next: (data) => this.categorias.set(data),
+      error: (err) => {
+        console.error('Error cargando categorías:', err);
+      },
+    });
+    this.productApi.listarMarcasActivas().subscribe({
+      next: (data) => this.marcas.set(data),
+      error: (err) => {
+        console.error('Error cargando marcas:', err);
+        this.marcas.set([
+          { idMarca: 1, nombreMarca: 'Allen-Bradley', activo: true },
+          { idMarca: 2, nombreMarca: 'Siemens', activo: true },
+        ]);
+      },
+    });
+  }
 
-  marcas = signal([
-    { id: 1, nombre: 'Allen-Bradley' },
-    { id: 2, nombre: 'Siemens' },
-    { id: 3, nombre: 'Festo' },
-    { id: 4, nombre: 'Schneider Electric' },
-  ]);
-
+  guardarProducto(): void {
+    const form = this.formProducto();
+    if (
+      !form.idCategoria ||
+      !form.idMarca ||
+      !form.sku ||
+      !form.descripcion ||
+      form.precioCompra === null ||
+      form.precioVenta === null
+    ) {
+      alert(
+        'Por favor completa los campos requeridos: Categoría, Marca, SKU, Descripción, Precios',
+      );
+      return;
+    }
+    if (form.precioCompra <= 0 || form.precioVenta <= 0) {
+      alert('Los precios deben ser mayores a 0');
+      return;
+    }
+    let modelosCompatibles: string[] = [];
+    if (form.modelosCompatiblesStr && form.modelosCompatiblesStr.trim()) {
+      modelosCompatibles = form.modelosCompatiblesStr
+        .split(',')
+        .map((m) => m.trim())
+        .filter((m) => m.length > 0);
+    }
+    const payload: CrearProductoDto = {
+      idCategoria: form.idCategoria,
+      idMarca: form.idMarca,
+      sku: form.sku.toUpperCase(),
+      numeroParte: form.numeroParte || null,
+      descripcion: form.descripcion,
+      modelosCompatibles: modelosCompatibles,
+      precioCompra: form.precioCompra,
+      precioVenta: form.precioVenta,
+    };
+    this.isSaving.set(true);
+    this.productApi.crear(payload).subscribe({
+      next: (productoCreado) => {
+        console.log('Producto creado:', productoCreado);
+        alert('Producto guardado exitosamente!');
+        this.limpiarFormulario();
+        this.closeModal();
+        // WebSocket se implementará luego
+      },
+      error: (err) => {
+        console.error('Error guardando producto:', err);
+        const msg = err.error?.message || err.error || 'Error al guardar. Verifica consola.';
+        alert(`No se pudo guardar:\n${msg}`);
+      },
+      complete: () => {
+        this.isSaving.set(false);
+      },
+    });
+  }
+  private limpiarFormulario(): void {
+    this.formProducto.set({
+      idCategoria: null,
+      idMarca: null,
+      sku: '',
+      numeroParte: '',
+      descripcion: '',
+      modelosCompatiblesStr: '',
+      precioCompra: null,
+      precioVenta: null,
+    });
+  }
   openModal() {
     this.isModalOpen.set(true);
     document.body.style.overflow = 'hidden';
@@ -177,5 +268,14 @@ export class ProductList {
         alert('No se pudo exportar. Verifica que el backend esté corriendo.');
       },
     });
+  }
+  actualizarForm<K extends keyof ReturnType<typeof this.formProducto>>(
+    campo: K,
+    valor: ReturnType<typeof this.formProducto>[K],
+  ): void {
+    this.formProducto.update((prev) => ({
+      ...prev,
+      [campo]: valor,
+    }));
   }
 }
