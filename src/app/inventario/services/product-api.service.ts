@@ -86,4 +86,10 @@ export class ProductApiService {
 
     return params;
   }
+  exportar(formato: 'excel' | 'pdf'): Observable<Blob> {
+    const exportUrl = `${environment.apiUrl}/v1/products/export?format=${formato}`;
+    return this.http.get(exportUrl, {
+      responseType: 'blob'
+  });
+}
 }

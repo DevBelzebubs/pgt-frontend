@@ -1,85 +1,108 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
-interface Movement {
-  id: string;
-  type: 'ENTRADA' | 'SALIDA' | 'AJUSTE';
-  sku: string;
-  productName: string;
-  quantity: number;
-  date: string;
-  user: string;
-  referenceDoc: string;
-  reason: string;
-}
+import { Component, signal, inject, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { MovementApiService } from '../../services/movement-api.service';
+import {
+  MovimientoListadoDto,
+  RegistrarMovimientoRequest,
+  FiltroMovimientoDto,
+  TipoMovimiento
+} from '../../models/movement.model';
+
 @Component({
   selector: 'app-movement-list',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './movement-list.html',
   styleUrl: './movement-list.css',
 })
-export class MovementList {
-isModalOpen = signal<boolean>(false);
-  
-  movements = signal<Movement[]>([
-    {
-      id: 'MOV-8901',
-      type: 'ENTRADA',
-      sku: 'MOT-001-BL',
-      productName: 'High Efficiency AC Motor 3 Phase',
-      quantity: 50,
-      date: '2026-04-28 08:30 AM',
-      user: 'Juan Perez',
-      referenceDoc: 'FAC-001-4928',
-      reason: 'Compra a proveedor local'
-    },
-    {
-      id: 'MOV-8902',
-      type: 'SALIDA',
-      sku: 'SEN-PXL-24',
-      productName: 'Photoelectric Distance Sensor 24V',
-      quantity: 5,
-      date: '2026-04-28 09:15 AM',
-      user: 'Diego Florian',
-      referenceDoc: 'BOL-002-1192',
-      reason: 'Venta minorista mostrador'
-    },
-    {
-      id: 'MOV-8903',
-      type: 'AJUSTE',
-      sku: 'BRG-6204-2RS',
-      productName: 'Deep Groove Ball Bearing Sealed',
-      quantity: -2,
-      date: '2026-04-27 16:45 PM',
-      user: 'Erick Flores',
-      referenceDoc: 'MEM-001',
-      reason: 'Merma por producto dañado en almacén'
-    },
-    {
-      id: 'MOV-8904',
-      type: 'SALIDA',
-      sku: 'MOT-001-BL',
-      productName: 'High Efficiency AC Motor 3 Phase',
-      quantity: 12,
-      date: '2026-04-27 11:20 AM',
-      user: 'Geral Casas',
-      referenceDoc: 'GUI-001-8832',
-      reason: 'Despacho orden mayorista'
-    }
-  ]);
+export class MovementList implements OnInit {
+  private readonly movementApi = inject(MovementApiService);
 
-  openModal() {
+  movements = signal<MovimientoListadoDto[]>([]);
+  loading = signal(false);
+  isModalOpen = signal<boolean>(false);
+
+  filtroTexto = signal('');
+  filtroTipo = signal<string>('');
+  filtroFecha = signal('');
+
+  formTipo = signal<TipoMovimiento>('INGRESO');
+  formProducto = signal('');
+  formCantidad = signal<number | null>(null);
+  formDocumentoRef = signal('');
+  formMotivo = signal('');
+
+  ngOnInit(): void {
+    this.cargarMovimientos();
+  }
+
+  cargarMovimientos(): void {
+    this.loading.set(true);
+    const filtros: FiltroMovimientoDto = {};
+    if (this.filtroTipo()) filtros.tipo = this.filtroTipo() as TipoMovimiento;
+    if (this.filtroFecha()) filtros.fechaDesde = this.filtroFecha();
+    if (this.filtroTexto()) filtros.texto = this.filtroTexto();
+
+    this.movementApi.listar(filtros).subscribe({
+      next: (data) => {
+        this.movements.set(data);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      }
+    });
+  }
+
+  openModal(): void {
     this.isModalOpen.set(true);
     document.body.style.overflow = 'hidden';
   }
 
-  closeModal() {
+  closeModal(): void {
     this.isModalOpen.set(false);
     document.body.style.overflow = 'auto';
+    this.limpiarFormulario();
+  }
+
+  registrarMovimiento(): void {
+    if (!this.formCantidad() || this.formCantidad()! <= 0) return;
+    if (!this.formMotivo()) return;
+
+    const payload: RegistrarMovimientoRequest = {
+      tipo: this.formTipo(),
+      idProducto: '',
+      idLocacion: '',
+      cantidad: this.formCantidad()!,
+      motivo: this.formMotivo(),
+      documentoRef: this.formDocumentoRef() || undefined
+    };
+
+    this.movementApi.registrar(payload).subscribe({
+      next: () => {
+        this.closeModal();
+        this.cargarMovimientos();
+      },
+      error: () => {
+      }
+    });
+  }
+
+  setFormTipo(tipo: string): void {
+    this.formTipo.set(tipo as any);
+  }
+
+  private limpiarFormulario(): void {
+    this.formTipo.set('INGRESO');
+    this.formProducto.set('');
+    this.formCantidad.set(null);
+    this.formDocumentoRef.set('');
+    this.formMotivo.set('');
   }
 
   getMovementBadgeClass(type: string): string {
     switch(type) {
-      case 'ENTRADA':
+      case 'INGRESO':
         return 'bg-[rgba(129,0,10,0.08)] dark:bg-[rgba(226,190,186,0.15)] text-[#81000A] dark:text-[#E2BEBA]';
       case 'SALIDA':
         return 'border border-[#81000A] text-[#81000A] dark:border-[#E2BEBA] dark:text-[#E2BEBA]';
@@ -91,14 +114,18 @@ isModalOpen = signal<boolean>(false);
   }
 
   getQuantityClass(type: string): string {
-    if (type === 'ENTRADA') return 'text-[#34A853]';
+    if (type === 'INGRESO') return 'text-[#34A853]';
     if (type === 'SALIDA') return 'text-[#111D23] dark:text-white';
-    return 'text-[#B45309]'; // Ajuste
+    return 'text-[#B45309]';
   }
 
-  formatQuantity(qty: number, type: string): string {
-    if (type === 'ENTRADA') return `+${qty}`;
-    if (type === 'SALIDA') return `-${Math.abs(qty)}`;
-    return qty > 0 ? `+${qty}` : `${qty}`;
+  formatQuantity(mov: MovimientoListadoDto): string {
+    if (mov.cantidadIngreso > 0) return `+${mov.cantidadIngreso}`;
+    if (mov.cantidadSalida > 0) return `-${mov.cantidadSalida}`;
+    return '0';
+  }
+
+  getQuantityValue(mov: MovimientoListadoDto): number {
+    return mov.cantidadIngreso > 0 ? mov.cantidadIngreso : mov.cantidadSalida;
   }
 }

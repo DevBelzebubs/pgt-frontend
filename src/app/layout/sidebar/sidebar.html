@@ -66,8 +66,8 @@
       <div class="flex flex-col overflow-hidden lg:flex"
         [class.hidden]="!isOpen()"
       >
-        <span class="font-['Inter'] font-bold text-sm text-[#111D23] dark:text-white truncate transition-colors">{{ userName }}</span>
-        <span class="font-['Inter'] font-medium text-[11px] uppercase tracking-wider text-[#4C616C] dark:text-[#8A9BA8] truncate transition-colors">{{ userRole }}</span>
+        <span class="font-['Inter'] font-bold text-sm text-[#111D23] dark:text-white truncate transition-colors">{{ authService.currentUserName() }}</span>
+        <span class="font-['Inter'] font-medium text-[11px] uppercase tracking-wider text-[#4C616C] dark:text-[#8A9BA8] truncate transition-colors">{{ authService.currentUserRole() }}</span>
       </div>
     </div>
 
