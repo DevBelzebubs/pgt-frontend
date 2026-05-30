@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { PagedResponse } from '../../../app/shared/models/paginated-response';
 import {
   ActualizarProductoDto,
   CambiarEstadoProductoDto,
@@ -49,17 +50,18 @@ export class ProductApiService {
   private readonly marcasUrl = `${environment.apiUrl}/v1/brands`;
 
   listarCatalogo(filtros: FiltroCatalogoProductosDto = {}): Observable<RespuestaPaginadaProductosDto> {
-  return this.http.get<ProductoResponseBe[]>(this.baseUrl, {
-    params: this.construirParams(filtros)
-  }).pipe(
-    map((lista) => ({
-      items: lista.map(be => this.mapProductoBeToFe(be)),
-      total: lista.length,
-      pagina: 1,
-      tamanioPagina: lista.length
-    }))
-  );
-}
+    const params = this.construirParams({ pagina: 0, tamanioPagina: 50, ...filtros });
+    return this.http.get<PagedResponse<ProductoResponseBe>>(this.baseUrl, {
+      params
+    }).pipe(
+      map((response) => ({
+        items: (response.items ?? []).map(be => this.mapProductoBeToFe(be)),
+        total: response.total,
+        pagina: response.page,
+        tamanioPagina: response.pageSize
+      }))
+    );
+  }
 
   obtenerPorId(idProducto: string): Observable<DetalleProductoDto> {
     return this.http.get<DetalleProductoDto>(`${this.baseUrl}/${idProducto}`);

@@ -1,8 +1,9 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { ProductApiService } from '../../services/product-api.service';
+import { WebSocketService } from '../../../core/services/websocket.service';
 import {
   ActualizarProductoDto,
   CategoriaProductoDto,
@@ -18,20 +19,35 @@ import {
   styles: [
     `
       @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
       @keyframes zoomIn {
-        from { opacity: 0; transform: scale(0.95) translateY(10px); }
-        to { opacity: 1; transform: scale(1) translateY(0); }
+        from {
+          opacity: 0;
+          transform: scale(0.95) translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
       }
-      .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
-      .animate-zoom-in { animation: zoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+      .animate-fade-in {
+        animation: fadeIn 0.2s ease-out forwards;
+      }
+      .animate-zoom-in {
+        animation: zoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
     `,
   ],
 })
 export class ProductList implements OnInit {
   private readonly productApi = inject(ProductApiService);
+  private readonly ws = inject(WebSocketService);
 
   isModalOpen = signal(false);
   isExportModalOpen = signal(false);
@@ -46,6 +62,11 @@ export class ProductList implements OnInit {
   products = signal<ProductoCatalogoDto[]>([]);
   categorias = signal<CategoriaProductoDto[]>([]);
   marcas = signal<MarcaProductoDto[]>([]);
+  currentPage = signal(0);
+  pageSize = signal(10);
+  totalItems = signal(0);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.totalItems() / this.pageSize())));
+
   filtroTexto = signal('');
   filtroCategoria = signal<number | ''>('');
   filtroEstado = signal('');
@@ -78,6 +99,8 @@ export class ProductList implements OnInit {
 
   ngOnInit(): void {
     this.cargarCatalogos();
+    this.ws.onMovement().subscribe(() => this.cargarProductos());
+    this.ws.onStockAlert().subscribe(() => this.cargarProductos());
   }
 
   private cargarCatalogos(): void {
@@ -116,7 +139,10 @@ export class ProductList implements OnInit {
 
   cargarProductos(): void {
     this.loading.set(true);
-    const filtros: FiltroCatalogoProductosDto = {};
+    const filtros: FiltroCatalogoProductosDto = {
+      pagina: this.currentPage(),
+      tamanioPagina: this.pageSize(),
+    };
     if (this.filtroTexto()) filtros.texto = this.filtroTexto();
     if (this.filtroCategoria() !== '') filtros.idCategoria = Number(this.filtroCategoria());
     if (this.filtroEstado() === 'activo') filtros.estado = true;
@@ -125,13 +151,24 @@ export class ProductList implements OnInit {
       next: (data) => {
         const enriched = this.enrichProductsWithCatalogNames(data.items);
         this.products.set(enriched);
+        this.totalItems.set(data.total);
         const total = data.total;
-        const lowStockCount = enriched.filter((p) => (p.stockTotal ?? 0) > 0 && (p.stockTotal ?? 0) <= 10).length;
+        const lowStockCount = enriched.filter(
+          (p) => (p.stockTotal ?? 0) > 0 && (p.stockTotal ?? 0) <= 10,
+        ).length;
         const criticalCount = enriched.filter((p) => (p.stockTotal ?? 0) === 0).length;
         this.inventoryStats.set({
           totalProducts: { value: total, trend: `${total} registrados`, isPositive: true },
-          lowStock: { value: lowStockCount, trend: 'Productos con stock ≤ 10', isPositive: lowStockCount < 10 },
-          criticalStock: { value: criticalCount, trend: 'Sin stock (0 unidades)', isPositive: false },
+          lowStock: {
+            value: lowStockCount,
+            trend: 'Productos con stock ≤ 10',
+            isPositive: lowStockCount < 10,
+          },
+          criticalStock: {
+            value: criticalCount,
+            trend: 'Sin stock (0 unidades)',
+            isPositive: false,
+          },
           totalCategories: { value: this.categorias().length, trend: 'Activas', isPositive: true },
         });
         this.loading.set(false);
@@ -143,21 +180,76 @@ export class ProductList implements OnInit {
     });
   }
 
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(0);
+    this.cargarProductos();
+  }
+
+  previousPage(): void {
+    if (this.currentPage() > 0) {
+      this.currentPage.update((p) => p - 1);
+      this.cargarProductos();
+    }
+  }
+
+  nextPage(): void {
+    if ((this.currentPage() + 1) * this.pageSize() < this.totalItems()) {
+      this.currentPage.update((p) => p + 1);
+      this.cargarProductos();
+    }
+  }
+
+  stockBarPercent(stock: number, minStock: number): number {
+    if (minStock > 0) {
+      const pct = (stock / minStock) * 100;
+      return pct > 100 ? 100 : pct;
+    }
+    return stock > 0 ? 100 : 0;
+  }
+
+  calcularMargenPct(compra: number, venta: number): number {
+    return venta > 0 ? ((venta - compra) / venta) * 100 : 0;
+  }
+
   getStockStatus(stock: number | undefined): { label: string; colorClass: string } {
     const s = stock ?? 0;
     if (s > 20)
-      return { label: 'Óptimo', colorClass: 'text-[#34A853] bg-[#E6F4EA] dark:bg-[rgba(52,168,83,0.1)]' };
+      return {
+        label: 'Óptimo',
+        colorClass: 'text-[#34A853] bg-[#E6F4EA] dark:bg-[rgba(52,168,83,0.1)]',
+      };
     if (s > 5)
-      return { label: 'Bajo', colorClass: 'text-[#F5A623] bg-[#FEF3C7] dark:bg-[rgba(245,166,35,0.1)]' };
+      return {
+        label: 'Bajo',
+        colorClass: 'text-[#F5A623] bg-[#FEF3C7] dark:bg-[rgba(245,166,35,0.1)]',
+      };
     if (s > 0)
-      return { label: 'Crítico', colorClass: 'text-[#81000A] bg-[#FCE8E8] dark:bg-[rgba(129,0,10,0.15)] dark:text-[#E2BEBA]' };
-    return { label: 'Agotado', colorClass: 'text-[#4C616C] bg-[#F3F4F6] dark:bg-[rgba(255,255,255,0.05)] dark:text-[#8A9BA8]' };
+      return {
+        label: 'Crítico',
+        colorClass:
+          'text-[#81000A] bg-[#FCE8E8] dark:bg-[rgba(239,68,68,0.15)] dark:text-[#EF4444]',
+      };
+    return {
+      label: 'Agotado',
+      colorClass:
+        'text-[#4C616C] bg-[#F3F4F6] dark:bg-[rgba(255,255,255,0.05)] dark:text-[#8A9BA8]',
+    };
   }
 
   guardarProducto(): void {
     const form = this.formProducto();
-    if (!form.idCategoria || !form.idMarca || !form.sku || !form.descripcion || form.precioCompra === null || form.precioVenta === null) {
-      alert('Por favor completa los campos requeridos: Categoría, Marca, SKU, Descripción, Precios');
+    if (
+      !form.idCategoria ||
+      !form.idMarca ||
+      !form.sku ||
+      !form.descripcion ||
+      form.precioCompra === null ||
+      form.precioVenta === null
+    ) {
+      alert(
+        'Por favor completa los campos requeridos: Categoría, Marca, SKU, Descripción, Precios',
+      );
       return;
     }
     if (form.precioCompra <= 0 || form.precioVenta <= 0) {
@@ -174,7 +266,10 @@ export class ProductList implements OnInit {
     }
     let modelosCompatibles: string[] = [];
     if (form.modelosCompatiblesStr && form.modelosCompatiblesStr.trim()) {
-      modelosCompatibles = form.modelosCompatiblesStr.split(',').map((m) => m.trim()).filter((m) => m.length > 0);
+      modelosCompatibles = form.modelosCompatiblesStr
+        .split(',')
+        .map((m) => m.trim())
+        .filter((m) => m.length > 0);
     }
     const payload: CrearProductoDto = {
       idCategoria: form.idCategoria,
@@ -207,9 +302,16 @@ export class ProductList implements OnInit {
 
   private limpiarFormulario(): void {
     this.formProducto.set({
-      idCategoria: null, idMarca: null, sku: '', numeroParte: '',
-      descripcion: '', modelosCompatiblesStr: '', precioCompra: null, precioVenta: null,
-      stockMinimo: null, stockInicial: null,
+      idCategoria: null,
+      idMarca: null,
+      sku: '',
+      numeroParte: '',
+      descripcion: '',
+      modelosCompatiblesStr: '',
+      precioCompra: null,
+      precioVenta: null,
+      stockMinimo: null,
+      stockInicial: null,
     });
   }
 
@@ -245,7 +347,8 @@ export class ProductList implements OnInit {
   }
 
   actualizarEditForm<K extends keyof ReturnType<typeof this.editFormProducto>>(
-    campo: K, valor: ReturnType<typeof this.editFormProducto>[K],
+    campo: K,
+    valor: ReturnType<typeof this.editFormProducto>[K],
   ): void {
     this.editFormProducto.update((prev) => ({ ...prev, [campo]: valor }));
   }
@@ -260,7 +363,10 @@ export class ProductList implements OnInit {
     }
     let modelosCompatibles: string[] = [];
     if (form.modelosCompatiblesStr && form.modelosCompatiblesStr.trim()) {
-      modelosCompatibles = form.modelosCompatiblesStr.split(',').map((m) => m.trim()).filter((m) => m.length > 0);
+      modelosCompatibles = form.modelosCompatiblesStr
+        .split(',')
+        .map((m) => m.trim())
+        .filter((m) => m.length > 0);
     }
     const payload: ActualizarProductoDto = {
       idCategoria: form.idCategoria,
@@ -286,9 +392,9 @@ export class ProductList implements OnInit {
     });
   }
 
-
   eliminarProducto(id: string): void {
-    if (!confirm('¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.')) return;
+    if (!confirm('¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.'))
+      return;
     this.productApi.eliminar(id).subscribe({
       next: () => {
         alert('Producto eliminado exitosamente!');
@@ -303,11 +409,22 @@ export class ProductList implements OnInit {
     });
   }
 
-  openModal() { this.isModalOpen.set(true); document.body.style.overflow = 'hidden'; }
-  closeModal() { this.isModalOpen.set(false); document.body.style.overflow = 'auto'; }
-  openExportModal() { this.isExportModalOpen.set(true); document.body.style.overflow = 'hidden'; }
-  closeExportModal() { this.isExportModalOpen.set(false); document.body.style.overflow = 'auto'; }
-
+  openModal() {
+    this.isModalOpen.set(true);
+    document.body.style.overflow = 'hidden';
+  }
+  closeModal() {
+    this.isModalOpen.set(false);
+    document.body.style.overflow = 'auto';
+  }
+  openExportModal() {
+    this.isExportModalOpen.set(true);
+    document.body.style.overflow = 'hidden';
+  }
+  closeExportModal() {
+    this.isExportModalOpen.set(false);
+    document.body.style.overflow = 'auto';
+  }
 
   exportar(formato: 'excel' | 'pdf') {
     this.closeExportModal();
@@ -330,8 +447,19 @@ export class ProductList implements OnInit {
     });
   }
   actualizarForm<K extends keyof ReturnType<typeof this.formProducto>>(
-    campo: K, valor: ReturnType<typeof this.formProducto>[K],
+    campo: K,
+    valor: ReturnType<typeof this.formProducto>[K],
   ): void {
     this.formProducto.update((prev) => ({ ...prev, [campo]: valor }));
+  }
+  parseModelos(str: string | null | undefined): string[] {
+    return (str ?? '').split(',').map(m => m.trim()).filter(m => m.length > 0);
+  }
+
+  getEditingProductSku(): string {
+    const id = this.editingProductId();
+    if (!id) return '';
+    const prod = this.products().find(p => p.idProducto === id);
+    return prod?.sku ?? '';
   }
 }
