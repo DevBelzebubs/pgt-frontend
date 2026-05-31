@@ -8,7 +8,7 @@ import { ProductTop } from '../../models/dashboard.models';
   standalone: true,
   imports: [CommonModule, ChartComponent],
   template: `
-    <div class="flex flex-col items-start p-6 h-[340px] bg-white dark:bg-[#0A0A0A] border border-gray-100 dark:border-[#1F1F1F] shadow-sm rounded-xl transition-all duration-300">
+    <div class="flex flex-col items-start p-6 h-[400px] bg-white dark:bg-[#0A0A0A] border border-gray-100 dark:border-[#1F1F1F] shadow-sm rounded-xl transition-all duration-300">
       <div class="flex justify-between items-start w-full mb-4">
         <div class="flex flex-col gap-1">
           <h3 class="font-['Work_Sans'] font-bold text-xl text-[#111D23] dark:text-white">
@@ -67,7 +67,7 @@ export class TopProductsChart {
     ]);
     this.chartOptions.set({
       type: 'bar',
-      height: '100%',
+      height: '180%',
       offsetY: 5,
       animations: {
         enabled: true,

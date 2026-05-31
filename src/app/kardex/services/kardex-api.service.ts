@@ -21,10 +21,14 @@ export class KardexApiService {
     const params = this.construirParams({ pagina: 0, tamanioPagina: 50, ...filtros });
     return this.http.get<PagedResponse<KardexDto>>(`${this.baseUrl}/${idProducto}`, { params });
   }
-  exportar(formato: 'excel' | 'pdf'): Observable<Blob> {
-    const exportUrl = `${environment.apiUrl}/v1/kardex/export?format=${formato.toUpperCase()}`;
-    return this.http.get(exportUrl, { responseType: 'blob' });
+  exportar(formato: 'excel' | 'pdf', metodoCosto: string = 'PPP'): Observable<Blob> {
+    const params = new HttpParams()
+      .set('format', formato.toUpperCase())
+      .set('metodoCosto', metodoCosto);
+    const exportUrl = `${environment.apiUrl}/v1/kardex/export`;
+    return this.http.get(exportUrl, { params, responseType: 'blob' });
   }
+
   private construirParams(filtros: FiltroKardexDto): HttpParams {
     let params = new HttpParams();
     if (filtros.idProducto) params = params.set('idProducto', filtros.idProducto);

@@ -5,16 +5,19 @@ import { forkJoin } from 'rxjs';
 import { ProductApiService } from '../../services/product-api.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import {
-  ActualizarProductoDto,
   CategoriaProductoDto,
-  CrearProductoDto,
   MarcaProductoDto,
   ProductoCatalogoDto,
   FiltroCatalogoProductosDto,
 } from '../../models/product.model';
+import { ProductCreateModal } from './components/product-create-modal/product-create-modal';
+import { ProductDetailModal } from './components/product-detail-modal/product-detail-modal';
+import { ProductEditModal } from './components/product-edit-modal/product-edit-modal';
+import { ProductExportModal } from './components/product-export-modal/product-export-modal';
+
 @Component({
   selector: 'app-product-list',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ProductCreateModal, ProductDetailModal, ProductEditModal, ProductExportModal],
   templateUrl: './product-list.html',
   styles: [
     `
@@ -51,12 +54,10 @@ export class ProductList implements OnInit {
 
   isModalOpen = signal(false);
   isExportModalOpen = signal(false);
-  isSaving = signal(false);
   loading = signal(false);
 
   isDetailModalOpen = signal(false);
   isEditModalOpen = signal(false);
-  isUpdating = signal(false);
   selectedProduct = signal<ProductoCatalogoDto | null>(null);
   editingProductId = signal<string | null>(null);
   products = signal<ProductoCatalogoDto[]>([]);
@@ -75,26 +76,6 @@ export class ProductList implements OnInit {
     lowStock: { value: 0, trend: '-', isPositive: true },
     criticalStock: { value: 0, trend: '-', isPositive: false },
     totalCategories: { value: 0, trend: '-', isPositive: true },
-  });
-  formProducto = signal({
-    idCategoria: null as number | null,
-    idMarca: null as number | null,
-    sku: '',
-    numeroParte: '',
-    descripcion: '',
-    modelosCompatiblesStr: '',
-    precioCompra: null as number | null,
-    precioVenta: null as number | null,
-    stockMinimo: null as number | null,
-    stockInicial: null as number | null,
-  });
-  editFormProducto = signal({
-    idCategoria: null as number | null,
-    idMarca: null as number | null,
-    numeroParte: '' as string | null,
-    descripcion: '',
-    modelosCompatiblesStr: '',
-    estado: true,
   });
 
   ngOnInit(): void {
@@ -200,18 +181,6 @@ export class ProductList implements OnInit {
     }
   }
 
-  stockBarPercent(stock: number, minStock: number): number {
-    if (minStock > 0) {
-      const pct = (stock / minStock) * 100;
-      return pct > 100 ? 100 : pct;
-    }
-    return stock > 0 ? 100 : 0;
-  }
-
-  calcularMargenPct(compra: number, venta: number): number {
-    return venta > 0 ? ((venta - compra) / venta) * 100 : 0;
-  }
-
   getStockStatus(stock: number | undefined): { label: string; colorClass: string } {
     const s = stock ?? 0;
     if (s > 20)
@@ -237,84 +206,6 @@ export class ProductList implements OnInit {
     };
   }
 
-  guardarProducto(): void {
-    const form = this.formProducto();
-    if (
-      !form.idCategoria ||
-      !form.idMarca ||
-      !form.sku ||
-      !form.descripcion ||
-      form.precioCompra === null ||
-      form.precioVenta === null
-    ) {
-      alert(
-        'Por favor completa los campos requeridos: Categoría, Marca, SKU, Descripción, Precios',
-      );
-      return;
-    }
-    if (form.precioCompra <= 0 || form.precioVenta <= 0) {
-      alert('Los precios deben ser mayores a 0');
-      return;
-    }
-    if (form.stockMinimo !== null && form.stockMinimo < 0) {
-      alert('El stock mínimo no puede ser negativo');
-      return;
-    }
-    if (form.stockInicial !== null && form.stockInicial < 0) {
-      alert('El stock inicial no puede ser negativo');
-      return;
-    }
-    let modelosCompatibles: string[] = [];
-    if (form.modelosCompatiblesStr && form.modelosCompatiblesStr.trim()) {
-      modelosCompatibles = form.modelosCompatiblesStr
-        .split(',')
-        .map((m) => m.trim())
-        .filter((m) => m.length > 0);
-    }
-    const payload: CrearProductoDto = {
-      idCategoria: form.idCategoria,
-      idMarca: form.idMarca,
-      sku: form.sku.toUpperCase(),
-      numeroParte: form.numeroParte || null,
-      descripcion: form.descripcion,
-      modelosCompatibles,
-      precioCompra: form.precioCompra,
-      precioVenta: form.precioVenta,
-      stockMinimo: form.stockMinimo ?? null,
-      stockInicial: form.stockInicial ?? null,
-    };
-    this.isSaving.set(true);
-    this.productApi.crear(payload).subscribe({
-      next: () => {
-        alert('Producto guardado exitosamente!');
-        this.limpiarFormulario();
-        this.closeModal();
-        this.cargarProductos();
-      },
-      error: (err) => {
-        console.error('Error guardando producto:', err);
-        const msg = err.error?.message || err.error || 'Error al guardar. Verifica consola.';
-        alert(`No se pudo guardar:\n${msg}`);
-      },
-      complete: () => this.isSaving.set(false),
-    });
-  }
-
-  private limpiarFormulario(): void {
-    this.formProducto.set({
-      idCategoria: null,
-      idMarca: null,
-      sku: '',
-      numeroParte: '',
-      descripcion: '',
-      modelosCompatiblesStr: '',
-      precioCompra: null,
-      precioVenta: null,
-      stockMinimo: null,
-      stockInicial: null,
-    });
-  }
-
   openDetail(product: ProductoCatalogoDto): void {
     this.selectedProduct.set(product);
     this.isDetailModalOpen.set(true);
@@ -328,14 +219,7 @@ export class ProductList implements OnInit {
 
   openEdit(product: ProductoCatalogoDto): void {
     this.editingProductId.set(product.idProducto);
-    this.editFormProducto.set({
-      idCategoria: product.categoria.idCategoria,
-      idMarca: product.marca.idMarca,
-      numeroParte: product.numeroParte ?? null,
-      descripcion: product.descripcion,
-      modelosCompatiblesStr: (product.modelosCompatibles ?? []).join(', '),
-      estado: product.estado,
-    });
+    this.selectedProduct.set(product);
     this.isEditModalOpen.set(true);
     document.body.style.overflow = 'hidden';
   }
@@ -343,70 +227,8 @@ export class ProductList implements OnInit {
   closeEdit(): void {
     this.isEditModalOpen.set(false);
     this.editingProductId.set(null);
+    this.selectedProduct.set(null);
     document.body.style.overflow = 'auto';
-  }
-
-  actualizarEditForm<K extends keyof ReturnType<typeof this.editFormProducto>>(
-    campo: K,
-    valor: ReturnType<typeof this.editFormProducto>[K],
-  ): void {
-    this.editFormProducto.update((prev) => ({ ...prev, [campo]: valor }));
-  }
-
-  actualizarProducto(): void {
-    const form = this.editFormProducto();
-    const id = this.editingProductId();
-    if (!id) return;
-    if (!form.idCategoria || !form.idMarca || !form.descripcion) {
-      alert('Completa los campos requeridos: Categoría, Marca, Descripción');
-      return;
-    }
-    let modelosCompatibles: string[] = [];
-    if (form.modelosCompatiblesStr && form.modelosCompatiblesStr.trim()) {
-      modelosCompatibles = form.modelosCompatiblesStr
-        .split(',')
-        .map((m) => m.trim())
-        .filter((m) => m.length > 0);
-    }
-    const payload: ActualizarProductoDto = {
-      idCategoria: form.idCategoria,
-      idMarca: form.idMarca,
-      numeroParte: form.numeroParte || null,
-      descripcion: form.descripcion,
-      modelosCompatibles,
-      estado: form.estado,
-    };
-    this.isUpdating.set(true);
-    this.productApi.actualizar(id, payload).subscribe({
-      next: () => {
-        alert('Producto actualizado exitosamente!');
-        this.closeEdit();
-        this.cargarProductos();
-      },
-      error: (err) => {
-        console.error('Error actualizando producto:', err);
-        const msg = err.error?.message || err.error || 'Error al actualizar. Verifica consola.';
-        alert(`No se pudo actualizar:\n${msg}`);
-      },
-      complete: () => this.isUpdating.set(false),
-    });
-  }
-
-  eliminarProducto(id: string): void {
-    if (!confirm('¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.'))
-      return;
-    this.productApi.eliminar(id).subscribe({
-      next: () => {
-        alert('Producto eliminado exitosamente!');
-        this.closeDetail();
-        this.cargarProductos();
-      },
-      error: (err) => {
-        console.error('Error eliminando producto:', err);
-        const msg = err.error?.message || err.error || 'Error al eliminar. Verifica consola.';
-        alert(`No se pudo eliminar:\n${msg}`);
-      },
-    });
   }
 
   openModal() {
@@ -426,40 +248,4 @@ export class ProductList implements OnInit {
     document.body.style.overflow = 'auto';
   }
 
-  exportar(formato: 'excel' | 'pdf') {
-    this.closeExportModal();
-    this.productApi.exportar(formato).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const fecha = new Date().toISOString().split('T')[0];
-        a.download = `inventario-productos-${fecha}.${formato === 'pdf' ? 'pdf' : 'xlsx'}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      },
-      error: (err) => {
-        console.error(`Error exportando ${formato.toUpperCase()}:`, err);
-        alert('No se pudo exportar. Verifica que el backend esté corriendo.');
-      },
-    });
-  }
-  actualizarForm<K extends keyof ReturnType<typeof this.formProducto>>(
-    campo: K,
-    valor: ReturnType<typeof this.formProducto>[K],
-  ): void {
-    this.formProducto.update((prev) => ({ ...prev, [campo]: valor }));
-  }
-  parseModelos(str: string | null | undefined): string[] {
-    return (str ?? '').split(',').map(m => m.trim()).filter(m => m.length > 0);
-  }
-
-  getEditingProductSku(): string {
-    const id = this.editingProductId();
-    if (!id) return '';
-    const prod = this.products().find(p => p.idProducto === id);
-    return prod?.sku ?? '';
-  }
 }

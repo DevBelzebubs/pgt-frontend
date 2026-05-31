@@ -8,11 +8,11 @@ import { MovementPoint } from '../../models/dashboard.models';
   standalone: true,
   imports: [CommonModule, ChartComponent],
   template: `
-    <div class="flex flex-col items-start p-6 h-[400px] bg-white dark:bg-[#0A0A0A] border border-gray-100 dark:border-[#1F1F1F] shadow-sm rounded-xl transition-all duration-300">
+    <div class="flex flex-col items-start p-6 bg-white dark:bg-[#0A0A0A] border border-gray-100 dark:border-[#1F1F1F] shadow-sm rounded-xl transition-all duration-300">
       <div class="flex justify-between items-start w-full mb-4">
         <div class="flex flex-col gap-1">
           <h3 class="font-['Work_Sans'] font-bold text-xl text-[#111D23] dark:text-white">
-            Movimientos x Tiempo
+            Movimientos por Tiempo
           </h3>
           <p class="font-['Inter'] font-medium text-sm text-[#4C616C] dark:text-[#8A9BA8]">
             Ingresos, salidas y ajustes registrados

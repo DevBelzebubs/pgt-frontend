@@ -8,16 +8,16 @@ import { TipoProporcion } from '../../models/dashboard.models';
   standalone: true,
   imports: [CommonModule, ChartComponent],
   template: `
-    <div class="flex flex-col p-4 h-[400px] bg-white dark:bg-[#0A0A0A] border border-gray-100 dark:border-[#1F1F1F] shadow-sm rounded-xl transition-all duration-300">
+    <div class="flex flex-col p-4 h-[268px] bg-white dark:bg-[#0A0A0A] border border-gray-100 dark:border-[#1F1F1F] shadow-sm rounded-xl transition-all duration-300">
       <div class="flex flex-col gap-0 w-full mb-2 shrink-0">
         <h3 class="font-['Work_Sans'] font-bold text-xl text-[#111D23] dark:text-white">
-          Proporción x Tipo
+          Proporción por Tipo
         </h3>
         <p class="font-['Inter'] font-medium text-sm text-[#4C616C] dark:text-[#8A9BA8]">
           Distribución de movimientos por categoría
         </p>
       </div>
-      <div class="w-full flex-1 flex items-center justify-center min-h-0">
+      <div class="w-full flex-1 flex items-center justify-center">
         <apx-chart
           [series]="chartSeries()"
           [chart]="chartOptions()"
@@ -61,7 +61,7 @@ export class ProporcionDonutChart {
     this.colors.set(pts.map(p => p.color));
     this.chartOptions.set({
       type: 'donut',
-      height: '100%',
+      height: '180%',
       animations: {
         enabled: true,
         easing: 'easeinout',
@@ -111,7 +111,7 @@ export class ProporcionDonutChart {
     });
     this.stroke.set({
       show: true,
-      width: 3,
+      width: 2,
       colors: ['#ffffff']
     });
     this.tooltip.set({

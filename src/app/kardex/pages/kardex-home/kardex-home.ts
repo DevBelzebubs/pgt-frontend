@@ -91,7 +91,7 @@ export class KardexHome implements OnInit {
 
   exportar(formato: 'excel' | 'pdf'): void {
     this.closeExportModal();
-    this.kardexApi.exportar(formato).subscribe({
+    this.kardexApi.exportar(formato, this.metodoCosto()).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -111,20 +111,31 @@ export class KardexHome implements OnInit {
     });
   }
 
+  getRowClass(tipo: string): string {
+    const salida = tipo === 'SALIDA' || tipo === 'EGRESO' || tipo === 'AJUSTE_NEGATIVO';
+    const ingreso = tipo === 'INGRESO' || tipo === 'AJUSTE_POSITIVO';
+    if (salida) return 'bg-red-50 dark:bg-red-950/20';
+    if (ingreso) return 'bg-green-50 dark:bg-green-950/20';
+    return '';
+  }
+
   getBadgeClass(tipo: string): string {
     switch (tipo) {
       case 'INGRESO':
-        return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400';
+      case 'AJUSTE_POSITIVO':
+        return 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400';
       case 'SALIDA':
-        return 'border border-red-500 text-red-600 dark:border-red-400 dark:text-red-400';
+      case 'EGRESO':
+      case 'AJUSTE_NEGATIVO':
+        return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400';
       default:
         return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
     }
   }
 
   getCantidadClass(tipo: string, valor: number): string {
-    if (tipo === 'SALIDA' && valor > 0) return 'text-[#EF4444]';
-    if (valor > 0) return 'text-[#34A853]';
+    if (tipo === 'SALIDA' && valor < 0) return 'text-[#81000A] dark:text-[#EF4444]';
+    if (valor > 0) return 'text-[#34A853] dark:text-[#34A853]';
     return '';
   }
 }

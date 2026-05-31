@@ -143,6 +143,8 @@ export class MovementList implements OnInit {
       tipo = this.formTipoAjuste() === 'POSITIVO' ? 'AJUSTE' : 'AJUSTE_NEGATIVO';
     }
 
+    if ((tipo === 'INGRESO' || tipo === 'AJUSTE') && (!this.formCostoUnit() || this.formCostoUnit()! <= 0)) return;
+
     const payload: RegistrarMovimientoRequest = {
       tipo,
       cantidad: this.formCantidad()!,
@@ -153,9 +155,12 @@ export class MovementList implements OnInit {
 
     if (tipo === 'INGRESO') {
       if (this.formLocacion()) payload.idLocacion = this.formLocacion();
+    }
+
+    if (tipo === 'INGRESO' || tipo === 'AJUSTE') {
       if (this.formProveedor()) payload.proveedor = this.formProveedor();
       if (this.formNroLote()) payload.nroLote = this.formNroLote();
-      if (this.formCostoUnit()) payload.costoUnit = this.formCostoUnit()!;
+      payload.costoUnit = this.formCostoUnit()!;
     } else if (tipo === 'SALIDA') {
       if (this.formCliente()) payload.proveedor = this.formCliente();
     }
