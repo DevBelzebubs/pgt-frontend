@@ -23,19 +23,29 @@ import { ProductTop } from '../../models/dashboard.models';
           <option>Últimos 3 meses</option>
         </select>
       </div>
-      <div class="w-full flex-1">
-        <apx-chart
-          [series]="chartSeries()"
-          [chart]="chartOptions()"
-          [xaxis]="xaxis()"
-          [yaxis]="yaxis()"
-          [stroke]="stroke()"
-          [colors]="colors()"
-          [plotOptions]="plotOptions()"
-          [dataLabels]="dataLabels()"
-          [grid]="grid()"
-          [tooltip]="tooltip()"
-        />
+      <div class="w-full flex-1 relative">
+        @if (data().length === 0) {
+          <div class="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
+            <svg class="w-12 h-12 text-[#4C616C] opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            <p class="font-['Inter'] font-medium text-sm text-[#4C616C] dark:text-[#8A9BA8]">No hay datos de productos</p>
+            <p class="font-['Inter'] text-xs text-[#8A9BA8] dark:text-[#6B7D8A]">Las salidas de inventario aparecerán aquí</p>
+          </div>
+        } @else {
+          <apx-chart
+            [series]="chartSeries()"
+            [chart]="chartOptions()"
+            [xaxis]="xaxis()"
+            [yaxis]="yaxis()"
+            [stroke]="stroke()"
+            [colors]="colors()"
+            [plotOptions]="plotOptions()"
+            [dataLabels]="dataLabels()"
+            [grid]="grid()"
+            [tooltip]="tooltip()"
+          />
+        }
       </div>
     </div>
   `

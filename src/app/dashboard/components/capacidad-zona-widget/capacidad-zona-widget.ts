@@ -32,28 +32,38 @@ import { ZoneCapacity } from '../../models/dashboard.models';
 
       @if (viewMode() === 'zona') {
         <div class="flex flex-col gap-4 w-full flex-1 overflow-y-auto pr-2">
-          @for (zone of data(); track zone.zone; let i = $index) {
-            <div class="flex flex-col gap-1.5 transition-all duration-300"
-                 [style.animation-delay.ms]="i * 100"
-                 [class.bar-animate]="!loaded()">
-              <div class="flex justify-between items-center">
-                <span class="font-['Inter'] font-semibold text-sm text-[#111D23] dark:text-white">
-                  {{ zone.zone }}
-                </span>
-                <span class="font-['Inter'] font-bold text-xs text-[#81000A] dark:text-[#EF4444]">
-                  {{ zone.percentage }}%
-                </span>
-              </div>
-              <div class="relative w-full h-3 bg-gray-100 dark:bg-[#1F1F1F] rounded-full overflow-hidden">
-                <div class="absolute left-0 top-0 h-full rounded-full transition-all duration-1000 ease-out"
-                     [style.width.%]="zone.percentage"
-                     [ngClass]="barColor(zone.percentage)">
-                </div>
-              </div>
-              <span class="font-['Inter'] font-medium text-xs text-[#4C616C] dark:text-[#8A9BA8]">
-                {{ zone.used }}/{{ zone.total }} locaciones
-              </span>
+          @if (data().length === 0) {
+            <div class="flex flex-col items-center justify-center h-full gap-3 text-center">
+              <svg class="w-12 h-12 text-[#4C616C] opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+              <p class="font-['Inter'] font-medium text-sm text-[#4C616C] dark:text-[#8A9BA8]">No hay zonas configuradas</p>
+              <p class="font-['Inter'] text-xs text-[#8A9BA8] dark:text-[#6B7D8A]">Las locaciones aparecerán aquí una vez registradas</p>
             </div>
+          } @else {
+            @for (zone of data(); track zone.zone; let i = $index) {
+              <div class="flex flex-col gap-1.5 transition-all duration-300"
+                   [style.animation-delay.ms]="i * 100"
+                   [class.bar-animate]="!loaded()">
+                <div class="flex justify-between items-center">
+                  <span class="font-['Inter'] font-semibold text-sm text-[#111D23] dark:text-white">
+                    {{ zone.zone }}
+                  </span>
+                  <span class="font-['Inter'] font-bold text-xs text-[#81000A] dark:text-[#EF4444]">
+                    {{ zone.percentage }}%
+                  </span>
+                </div>
+                <div class="relative w-full h-3 bg-gray-100 dark:bg-[#1F1F1F] rounded-full overflow-hidden">
+                  <div class="absolute left-0 top-0 h-full rounded-full transition-all duration-1000 ease-out"
+                       [style.width.%]="zone.percentage"
+                       [ngClass]="barColor(zone.percentage)">
+                  </div>
+                </div>
+                <span class="font-['Inter'] font-medium text-xs text-[#4C616C] dark:text-[#8A9BA8]">
+                  {{ zone.used }}/{{ zone.total }} locaciones
+                </span>
+              </div>
+            }
           }
         </div>
       } @else {
