@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { map, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { PickingOrder, PickingRoute, CreatePickingOrderPayload } from '../models/picking.model';
+import { PickingOrder, PickingRoute, CreatePickingOrderPayload, CrearOrdenDesdeSalidaPayload } from '../models/picking.model';
 
 @Injectable({ providedIn: 'root' })
 export class PickingApiService {
@@ -25,6 +25,10 @@ export class PickingApiService {
 
   crear(payload: CreatePickingOrderPayload): Observable<PickingOrder> {
     return this.http.post<{ data: PickingOrder }>(this.baseUrl, payload).pipe(map((r) => r.data));
+  }
+
+  crearDesdeSalida(payload: CrearOrdenDesdeSalidaPayload): Observable<PickingOrder> {
+    return this.http.post<{ data: PickingOrder }>(`${this.baseUrl}/from-salida`, payload).pipe(map((r) => r.data));
   }
 
   asignar(id: string, usuarioPickingId: number): Observable<PickingOrder> {
