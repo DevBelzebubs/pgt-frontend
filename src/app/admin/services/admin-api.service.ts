@@ -16,9 +16,9 @@ interface ApiResponse<T> {
 })
 export class AdminApiService {
   private readonly http = inject(HttpClient);
-  private readonly usersUrl = `${environment.apiUrl}/v1/users`;
-  private readonly rolesUrl = `${environment.apiUrl}/v1/roles`;
-  private readonly accountsUrl = `${environment.apiUrl}/v1/accounts`;
+  private readonly usersUrl = `${environment.apiUrl}/users`;
+  private readonly rolesUrl = `${environment.apiUrl}/roles`;
+  private readonly accountsUrl = `${environment.apiUrl}/accounts`;
 
   listUsers(): Observable<AdminUser[]> {
     return this.http

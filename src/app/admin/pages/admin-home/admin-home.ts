@@ -5,16 +5,17 @@ import { finalize, forkJoin } from 'rxjs';
 import { AdminApiService } from '../../services/admin-api.service';
 import { AdminAccount, AdminRole, AdminUser } from '../../models/admin.models';
 import { AdminCreateUserModal } from './components/admin-create-user-modal/admin-create-user-modal';
+import { Btn } from '../../../shared/components/btn/btn';
+import { Pagination } from '../../../shared/components/pagination/pagination';
 
 type AdminTab = 'users' | 'roles';
 
 @Component({
   selector: 'app-admin-home',
-  imports: [CommonModule, FormsModule, AdminCreateUserModal],
+  imports: [CommonModule, FormsModule, AdminCreateUserModal, Btn, Pagination],
   templateUrl: './admin-home.html',
 })
 export class AdminHome implements OnInit {
-  readonly Math = Math;
   readonly skeletonRows = [0, 1, 2, 3, 4];
   private readonly adminApi = inject(AdminApiService);
 
@@ -30,7 +31,7 @@ export class AdminHome implements OnInit {
   roles = signal<AdminRole[]>([]);
   accounts = signal<AdminAccount[]>([]);
 
-  page = signal(1);
+  page = signal(0);
   pageSize = 10;
 
   accountsByName = computed(() => {
@@ -60,12 +61,8 @@ export class AdminHome implements OnInit {
     });
   });
 
-  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize)));
-
-  pageButtons = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
-
   paginatedUsers = computed(() => {
-    const start = (this.page() - 1) * this.pageSize;
+    const start = this.page() * this.pageSize;
     return this.filteredUsers().slice(start, start + this.pageSize);
   });
 
@@ -101,18 +98,12 @@ export class AdminHome implements OnInit {
 
   setTab(tab: AdminTab): void {
     this.activeTab.set(tab);
-    this.page.set(1);
+    this.page.set(0);
   }
 
   updateSearch(value: string): void {
     this.searchTerm.set(value);
-    this.page.set(1);
-  }
-
-  goToPage(p: number): void {
-    if (p >= 1 && p <= this.totalPages()) {
-      this.page.set(p);
-    }
+    this.page.set(0);
   }
 
   onUserCreated(): void {

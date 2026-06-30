@@ -12,11 +12,7 @@
       </p>
     </div>
 
-    <button
-      type="button"
-      (click)="loadAdminData()"
-      class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 font-['Inter'] text-sm font-semibold text-[#111D23] shadow-sm transition-colors hover:bg-gray-50 dark:border-[#1F1F1F] dark:bg-[#0A0A0A] dark:text-white dark:hover:bg-[#141414]"
-    >
+    <button app-btn variant="secondary" (click)="loadAdminData()">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M20 8A8 8 0 006.34 4.34M4 16a8 8 0 0013.66 3.66" />
       </svg>
@@ -109,11 +105,7 @@
                 class="w-full rounded-lg border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 font-['Inter'] text-sm text-[#111D23] outline-none transition-all focus:border-[#81000A] focus:bg-white focus:shadow-[0_0_0_1px_rgba(129,0,10,0.08)] dark:border-[#1F1F1F] dark:bg-[#141414] dark:text-white dark:focus:border-[#EF4444] dark:focus:bg-black"
               />
             </div>
-            <button
-              type="button"
-              (click)="showCreateUserModal.set(true)"
-              class="inline-flex items-center gap-2 rounded-lg bg-[#81000A] px-4 py-2.5 font-['Inter'] text-sm font-bold text-white transition-colors hover:bg-[#6A0008] shadow-sm"
-            >
+            <button app-btn variant="primary" (click)="showCreateUserModal.set(true)">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
@@ -225,44 +217,13 @@
             </table>
           </div>
 
-          <!-- PAGINATION -->
-          @if (totalPages() > 1) {
-            <div class="flex items-center justify-between border-t border-gray-100 px-5 py-4 dark:border-[#1F1F1F]">
-              <span class="font-['Inter'] text-xs text-[#4C616C] dark:text-[#8A9BA8]">
-                Mostrando {{ ((page() - 1) * pageSize) + 1 }}–{{ Math.min(page() * pageSize, filteredUsers().length) }} de {{ filteredUsers().length }} usuarios
-              </span>
-              <div class="flex items-center gap-1">
-                <button
-                  type="button"
-                  (click)="goToPage(page() - 1)"
-                  [disabled]="page() <= 1"
-                  class="rounded-lg border border-gray-200 px-3 py-1.5 font-['Inter'] text-xs font-bold text-[#111D23] transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#1F1F1F] dark:text-white dark:hover:bg-[#222222]"
-                >
-                  Anterior
-                </button>
-                @for (p of pageButtons(); track p) {
-                  <button
-                    type="button"
-                    (click)="goToPage(p)"
-                    class="flex h-8 w-8 items-center justify-center rounded-lg font-['Inter'] text-xs font-bold transition-colors"
-                    [ngClass]="p === page()
-                      ? 'bg-[#81000A] text-white'
-                      : 'text-[#4C616C] hover:bg-gray-50 dark:text-[#8A9BA8] dark:hover:bg-[#222222]'"
-                  >
-                    {{ p }}
-                  </button>
-                }
-                <button
-                  type="button"
-                  (click)="goToPage(page() + 1)"
-                  [disabled]="page() >= totalPages()"
-                  class="rounded-lg border border-gray-200 px-3 py-1.5 font-['Inter'] text-xs font-bold text-[#111D23] transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#1F1F1F] dark:text-white dark:hover:bg-[#222222]"
-                >
-                  Siguiente
-                </button>
-              </div>
-            </div>
-          }
+          <app-pagination
+            [currentPage]="page()"
+            [pageSize]="pageSize"
+            [totalItems]="filteredUsers().length"
+            [showPageButtons]="true"
+            (pageChange)="page.set($event)"
+          />
         }
       }
 

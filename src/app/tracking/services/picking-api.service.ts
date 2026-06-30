@@ -7,7 +7,7 @@ import { PickingOrder, PickingRoute, CreatePickingOrderPayload, CrearOrdenDesdeS
 @Injectable({ providedIn: 'root' })
 export class PickingApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiUrl}/v1/picking/orders`;
+  private readonly baseUrl = `${environment.apiUrl}/picking/orders`;
 
   listar(estado?: string): Observable<PickingOrder[]> {
     const params = estado ? `?estado=${estado}` : '';

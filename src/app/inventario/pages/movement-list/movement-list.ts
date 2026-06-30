@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MovementApiService } from '../../services/movement-api.service';
 import { ProductApiService } from '../../services/product-api.service';
@@ -13,6 +13,12 @@ import {
 import { ProductoCatalogoDto } from '../../models/product.model';
 import { LocationDto } from '../../models/location.model';
 import { WebSocketService } from '../../../core/services/websocket.service';
+import { scrollLock } from '../../../shared/utils/scroll-lock';
+import { Pagination } from '../../../shared/components/pagination/pagination';
+import { Btn } from '../../../shared/components/btn/btn';
+import { Modal } from '../../../shared/components/modal/modal';
+import { ModalHeader } from '../../../shared/components/modal-header/modal-header';
+import { ModalFooter } from '../../../shared/components/modal-footer/modal-footer';
 import { HeatmapApiService } from '../../../tracking/services/heatmap-api.service';
 import { PickingApiService } from '../../../tracking/services/picking-api.service';
 import { LocationProductDto } from '../../../tracking/models/heatmap.model';
@@ -28,15 +34,9 @@ interface SalidaItem {
 
 @Component({
   selector: 'app-movement-list',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, Pagination, Btn, Modal, ModalHeader, ModalFooter],
   templateUrl: './movement-list.html',
   styleUrl: './movement-list.css',
-  styles: [`
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes zoomIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-    .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
-    .animate-zoom-in { animation: zoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  `],
 })
 export class MovementList implements OnInit {
   private readonly movementApi = inject(MovementApiService);
@@ -53,7 +53,6 @@ export class MovementList implements OnInit {
   currentPage = signal(0);
   pageSize = signal(10);
   totalItems = signal(0);
-  totalPages = computed(() => Math.max(1, Math.ceil(this.totalItems() / this.pageSize())));
   isModalOpen = signal<boolean>(false);
   isSaving = signal(false);
 
@@ -121,34 +120,25 @@ export class MovementList implements OnInit {
     });
   }
 
+  onPageChange(page: number): void {
+    this.currentPage.set(page);
+    this.cargarMovimientos();
+  }
+
   onPageSizeChange(size: number): void {
     this.pageSize.set(size);
     this.currentPage.set(0);
     this.cargarMovimientos();
   }
 
-  previousPage(): void {
-    if (this.currentPage() > 0) {
-      this.currentPage.update(p => p - 1);
-      this.cargarMovimientos();
-    }
-  }
-
-  nextPage(): void {
-    if ((this.currentPage() + 1) * this.pageSize() < this.totalItems()) {
-      this.currentPage.update(p => p + 1);
-      this.cargarMovimientos();
-    }
-  }
-
   openModal(): void {
     this.isModalOpen.set(true);
-    document.body.style.overflow = 'hidden';
+    scrollLock(true);
   }
 
   closeModal(): void {
     this.isModalOpen.set(false);
-    document.body.style.overflow = 'auto';
+    scrollLock(false);
     this.limpiarFormulario();
   }
 

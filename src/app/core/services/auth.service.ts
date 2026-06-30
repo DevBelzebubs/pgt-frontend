@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap, map, catchError, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
 export interface LoginRequest {
   username: string; 
   password: string;
@@ -27,7 +28,7 @@ export class AuthService {
   currentUserRole = signal<string | null>(null);
   currentUserName = signal<string | null>(null);
   sessionExpired = signal<boolean>(false);
-  private readonly AUTH_API_URL = 'http://localhost:8080/api/v1/auth'; 
+  private readonly AUTH_API_URL = `${environment.apiUrl}/auth`; 
 
   constructor(
     private router: Router,
@@ -48,8 +49,11 @@ export class AuthService {
       const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
       const decoded = JSON.parse(atob(base64));
       this.currentUserName.set(decoded.name || decoded.sub || decoded.preferred_username || 'Usuario');
-      const role = decoded.role || decoded.rol;
-      if (role) this.currentUserRole.set(role);
+      let role = decoded.role || decoded.rol;
+      if (role) {
+        if (role.startsWith('ROLE_')) role = role.slice(5);
+        this.currentUserRole.set(role);
+      }
     } catch {
       this.currentUserName.set('Usuario');
     }
@@ -60,7 +64,8 @@ export class AuthService {
     return this.http.post<ApiResponse<LoginResponse>>(`${this.AUTH_API_URL}/login`, credentials).pipe(
       tap((response) => {
         const token = response.data.token;
-        const role = response.data.role; 
+        let role = response.data.role;
+        if (role && role.startsWith('ROLE_')) role = role.slice(5);
         
         localStorage.setItem('token', token);
         localStorage.setItem('role', role);
