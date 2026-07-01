@@ -5,8 +5,9 @@ import { Router } from '@angular/router';
 import { Observable, tap, map, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 export interface LoginRequest {
-  username: string; 
+  username: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface LoginResponse {
@@ -28,21 +29,24 @@ export class AuthService {
   currentUserRole = signal<string | null>(null);
   currentUserName = signal<string | null>(null);
   sessionExpired = signal<boolean>(false);
-  private readonly AUTH_API_URL = `${environment.apiUrl}/auth`; 
+  private readonly AUTH_API_URL = `${environment.apiUrl}/auth`;
+  private readonly REMEMBERED_USER_KEY = 'rememberedUser';
 
   constructor(
     private router: Router,
     private http: HttpClient
   ) {
-    if (localStorage.getItem('token')) {
+    const token = this.getToken();
+    if (token) {
       this.isAuthenticated.set(true);
-      this.currentUserRole.set(localStorage.getItem('role'));
+      const role = localStorage.getItem('role') || sessionStorage.getItem('role');
+      this.currentUserRole.set(role);
       this.decodeAndSetUser();
     }
   }
 
   private decodeAndSetUser(): void {
-    const token = localStorage.getItem('token');
+    const token = this.getToken();
     if (!token) return;
     try {
       const payload = token.split('.')[1];
@@ -60,23 +64,29 @@ export class AuthService {
   }
 
   login(credentials: LoginRequest): Observable<boolean> {
-    
-    return this.http.post<ApiResponse<LoginResponse>>(`${this.AUTH_API_URL}/login`, credentials).pipe(
+    const { rememberMe, ...loginPayload } = credentials;
+
+    return this.http.post<ApiResponse<LoginResponse>>(`${this.AUTH_API_URL}/login`, loginPayload).pipe(
       tap((response) => {
         const token = response.data.token;
         let role = response.data.role;
         if (role && role.startsWith('ROLE_')) role = role.slice(5);
-        
-        localStorage.setItem('token', token);
-        localStorage.setItem('role', role);
-        
+
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem('token', token);
+        storage.setItem('role', role);
+
+        if (rememberMe) {
+          this.saveRememberedUser(loginPayload.username);
+        } else {
+          this.clearRememberedUser();
+        }
+
         this.isAuthenticated.set(true);
         this.currentUserRole.set(role);
         this.decodeAndSetUser();
       }),
-      // Si todo sale bien, emitimos 'true'
       map(() => true),
-      // Si el backend devuelve 401 o 400 (credenciales inválidas), lo capturamos
       catchError((error) => {
         console.error('Error de autenticación:', error);
         return of(false);
@@ -87,16 +97,19 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
-    
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('role');
+    this.clearRememberedUser();
+
     this.isAuthenticated.set(false);
     this.currentUserRole.set(null);
     this.currentUserName.set(null);
-    
+
     this.router.navigate(['/auth/login']);
   }
 
   getToken(): string | null {
-    return localStorage.getItem('token');
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
   }
   
   handleSessionExpired(): void {
@@ -106,5 +119,17 @@ export class AuthService {
   confirmSessionExpired(): void {
     this.sessionExpired.set(false);
     this.logout();
+  }
+
+  saveRememberedUser(username: string): void {
+    localStorage.setItem(this.REMEMBERED_USER_KEY, username);
+  }
+
+  getRememberedUser(): string | null {
+    return localStorage.getItem(this.REMEMBERED_USER_KEY);
+  }
+
+  clearRememberedUser(): void {
+    localStorage.removeItem(this.REMEMBERED_USER_KEY);
   }
 }
